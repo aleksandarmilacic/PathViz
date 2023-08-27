@@ -15,12 +15,14 @@ namespace PathViz
         private int[,] grid;
         private int rows = 5;
         private int cols = 5;
+        private PathFinderService pathFinderService;
 
         public MainWindow()
         {
             InitializeComponent();
-            InitializeGrid(); 
-            InitializeResetButton();   
+            pathFinderService = new PathFinderService(5, 5); // Initialize it
+            InitializeGrid();
+            InitializeResetButton();
         }
 
         private void InitializeResetButton()
@@ -123,7 +125,20 @@ namespace PathViz
         {
             if (startButton != null && endButton != null)
             {
-                RunDijkstra();
+                var start = GetGridPosition(startButton);
+                var end = GetGridPosition(endButton);
+                pathFinderService.Grid = this.grid; // Set the grid from MainWindow to PathFinderService
+
+                bool isPathFound = pathFinderService.RunDijkstra(start, end);
+
+                if (isPathFound)
+                {
+                    MessageBox.Show("Path found!");
+                }
+                else
+                {
+                    MessageBox.Show("No path found!");
+                }
             }
             else
             {
@@ -131,55 +146,7 @@ namespace PathViz
             }
         }
 
-        private void RunDijkstra()
-        {
-            var start = GetGridPosition(startButton);
-            var end = GetGridPosition(endButton);
 
-            int[,] dist = new int[rows, cols];
-            for (int i = 0; i < rows; i++)
-            {
-                for (int j = 0; j < cols; j++)
-                {
-                    dist[i, j] = int.MaxValue;
-                }
-            }
-
-            dist[start.Item1, start.Item2] = 0;
-            var toVisit = new Queue<(int, int)>();
-            toVisit.Enqueue(start);
-
-            while (toVisit.Count > 0)
-            {
-                var current = toVisit.Dequeue();
-                var x = current.Item1;
-                var y = current.Item2;
-
-                if (current == end)
-                {
-                    MessageBox.Show("Path found!");
-                    return;
-                }
-
-                foreach (var dir in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) })
-                {
-                    var newX = x + dir.Item1;
-                    var newY = y + dir.Item2;
-
-                    if (newX >= 0 && newX < rows && newY >= 0 && newY < cols && grid[newX, newY] != 1) // Check for obstacle
-                    {
-                        var newDist = dist[x, y] + 1;
-                        if (newDist < dist[newX, newY])
-                        {
-                            dist[newX, newY] = newDist;
-                            toVisit.Enqueue((newX, newY));
-                        }
-                    }
-                }
-            }
-
-            MessageBox.Show("No path found!");
-        }
 
     }
 }
